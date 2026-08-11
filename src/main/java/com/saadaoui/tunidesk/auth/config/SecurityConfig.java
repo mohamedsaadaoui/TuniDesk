@@ -78,10 +78,13 @@ public class SecurityConfig {
                         ).permitAll()
                         .requestMatchers(
                                 "/api/auth/me",
+                                "/api/users/me",
+                                "/api/users/me/password",
                                 "/api/users/options",
                                 "/api/users/agents",
                                 "/api/categories/**",
                                 "/api/tickets/**",
+                                "/api/attachments/**",
                                 "/api/dashboard/**",
                                 "/api/notifications/**",
                                 "/api/sla/**"

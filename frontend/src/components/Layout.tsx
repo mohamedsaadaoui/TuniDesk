@@ -18,6 +18,8 @@ const NAV_ITEMS: NavItem[] = [
   { to: "/", label: "Dashboard", icon: "M3 12l9-9 9 9M5 10v10h5v-6h4v6h5V10" },
   { to: "/tickets", label: "Tickets", icon: "M20 6H4v12h16V6zM4 6l8 5 8-5" },
   { to: "/tickets/new", label: "New ticket", icon: "M12 5v14M5 12h14" },
+  { to: "/notifications", label: "Notifications", icon: "M18 8a6 6 0 10-12 0c0 7-3 9-3 9h18s-3-2-3-9M13.7 21a2 2 0 01-3.4 0" },
+  { to: "/profile", label: "Profile", icon: "M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2M12 11a4 4 0 100-8 4 4 0 000 8z" },
   { to: "/categories", label: "Categories", icon: "M4 7h16M4 12h16M4 17h10", adminOnly: true },
   { to: "/sla", label: "SLA policies", icon: "M12 3v10l6 4M12 3a9 9 0 100 18 9 9 0 000-18", adminOnly: true },
   { to: "/users", label: "Users", icon: "M16 7a4 4 0 11-8 0 4 4 0 018 0zM4 21v-1a6 6 0 0112 0v1", adminOnly: true },
@@ -134,10 +136,10 @@ export function Layout() {
                       className="btn btn-ghost btn-sm"
                       onClick={() => {
                         setOpen(false);
-                        navigate("/tickets");
+                        navigate("/notifications");
                       }}
                     >
-                      Go to tickets
+                      View all notifications
                     </button>
                   </div>
                 </div>

@@ -42,5 +42,8 @@ frontend/dist/
 ### Runtime logs ###
 *.log
 
+### Runtime data ###
+uploads/
+
 ### Build artifacts ###
 *.tsbuildinfo

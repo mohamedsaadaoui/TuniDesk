@@ -1,10 +1,14 @@
 package com.saadaoui.tunidesk.ticket.service.impl;
 
+import com.saadaoui.tunidesk.attachment.mapper.TicketAttachmentMapper;
+import com.saadaoui.tunidesk.attachment.repository.TicketAttachmentRepository;
+import com.saadaoui.tunidesk.attachment.service.AttachmentService;
 import com.saadaoui.tunidesk.audit.AuditConstants;
 import com.saadaoui.tunidesk.audit.service.AuditLogService;
 import com.saadaoui.tunidesk.auth.entity.User;
 import com.saadaoui.tunidesk.auth.repository.UserRepository;
 import com.saadaoui.tunidesk.category.repository.CategoryRepository;
+import com.saadaoui.tunidesk.email.service.EmailService;
 import com.saadaoui.tunidesk.entity.*;
 import com.saadaoui.tunidesk.exception.AccessDeniedException;
 import com.saadaoui.tunidesk.exception.InvalidStatusTransitionException;
@@ -56,6 +60,12 @@ public class TicketServiceImpl implements TicketService {
 
     private final TicketHistoryRepository historyRepository;
 
+    private final TicketAttachmentRepository attachmentRepository;
+
+    private final TicketAttachmentMapper attachmentMapper;
+
+    private final AttachmentService attachmentService;
+
     private final CategoryRepository categoryRepository;
 
     private final UserRepository userRepository;
@@ -65,6 +75,8 @@ public class TicketServiceImpl implements TicketService {
     private final SlaService slaService;
 
     private final NotificationService notificationService;
+
+    private final EmailService emailService;
 
     private final AuditLogService auditLogService;
 
@@ -179,10 +191,17 @@ public class TicketServiceImpl implements TicketService {
                 .map(ticketMapper::toHistoryResponse)
                 .toList();
 
+        List<com.saadaoui.tunidesk.attachment.dto.TicketAttachmentResponse> attachments =
+                attachmentRepository.findByTicketOrderByCreatedAtAsc(ticket)
+                        .stream()
+                        .map(attachmentMapper::toResponse)
+                        .toList();
+
         return TicketDetailResponse.builder()
                 .ticket(ticketMapper.toResponse(ticket))
                 .comments(comments)
                 .history(history)
+                .attachments(attachments)
                 .build();
     }
 
@@ -240,6 +259,13 @@ public class TicketServiceImpl implements TicketService {
                 "Ticket " + saved.getTicketNumber() + " assigned",
                 "\"" + saved.getTitle() + "\" was assigned to " + assignee.getFirstName() + " " + assignee.getLastName());
 
+        emailService.sendTicketAlert(
+                "Ticket " + saved.getTicketNumber() + " assigned to you",
+                "\"" + saved.getTitle() + "\" was assigned to you by "
+                        + actor.getFirstName() + " " + actor.getLastName() + "\n\n"
+                        + "Priority: " + saved.getPriority(),
+                List.of(assignee));
+
         return ticketMapper.toResponse(saved);
     }
 
@@ -265,6 +291,12 @@ public class TicketServiceImpl implements TicketService {
                 NotificationTypes.TICKET_ASSIGNED,
                 "Ticket " + saved.getTicketNumber() + " assigned",
                 "\"" + saved.getTitle() + "\" was taken by " + actor.getFirstName() + " " + actor.getLastName());
+
+        emailService.sendTicketAlert(
+                "Your ticket " + saved.getTicketNumber() + " has been taken",
+                "\"" + saved.getTitle() + "\" was taken by "
+                        + actor.getFirstName() + " " + actor.getLastName(),
+                List.of(saved.getCreatedBy()));
 
         return ticketMapper.toResponse(saved);
     }
@@ -391,6 +423,12 @@ public class TicketServiceImpl implements TicketService {
                 "New comment on " + ticket.getTicketNumber(),
                 actor.getFirstName() + " commented: " + truncated(saved.getContent()));
 
+        emailService.sendTicketAlert(
+                "New comment on " + ticket.getTicketNumber(),
+                actor.getFirstName() + " " + actor.getLastName() + " commented on \""
+                        + ticket.getTitle() + "\":\n\n" + saved.getContent(),
+                recipients);
+
         return ticketMapper.toCommentResponse(saved);
     }
 
@@ -406,6 +444,7 @@ public class TicketServiceImpl implements TicketService {
 
         Ticket ticket = findTicket(id);
 
+        attachmentService.deleteAllForTicket(ticket);
         commentRepository.deleteAll(commentRepository.findByTicketOrderByCreatedAtAsc(ticket));
         historyRepository.deleteAll(historyRepository.findByTicketOrderByCreatedAtAsc(ticket));
 
@@ -434,6 +473,11 @@ public class TicketServiceImpl implements TicketService {
                 "Ticket " + saved.getTicketNumber() + " unassigned",
                 "\"" + saved.getTitle() + "\" is no longer assigned");
 
+        emailService.sendTicketAlert(
+                "Ticket " + saved.getTicketNumber() + " unassigned",
+                "\"" + saved.getTitle() + "\" is no longer assigned to anyone.",
+                List.of(saved.getCreatedBy()));
+
         return ticketMapper.toResponse(saved);
     }
 
@@ -453,6 +497,12 @@ public class TicketServiceImpl implements TicketService {
         }
 
         notificationService.notifyUsers(recipients, NotificationTypes.TICKET_STATUS_CHANGED, title, message);
+
+        emailService.sendTicketAlert(
+                "Ticket " + ticket.getTicketNumber() + ": " + from + " -> " + to,
+                "\"" + ticket.getTitle() + "\" was moved from " + from + " to " + to
+                        + " by " + actor.getFirstName() + " " + actor.getLastName(),
+                recipients);
     }
 
     private void notifyAgents(String type, String title, String message) {

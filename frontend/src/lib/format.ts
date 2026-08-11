@@ -37,3 +37,10 @@ export function initials(firstName?: string, lastName?: string): string {
 export function fullName(firstName?: string, lastName?: string): string {
   return [firstName, lastName].filter(Boolean).join(" ") || "-";
 }
+
+export function formatBytes(bytes?: number): string {
+  if (bytes === undefined || bytes === null || bytes < 0) return "-";
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+}

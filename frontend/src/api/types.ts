@@ -70,6 +70,17 @@ export interface UpdateUserRequest {
   roles: string[];
 }
 
+export interface ProfileUpdateRequest {
+  firstName: string;
+  lastName: string;
+  phoneNumber?: string;
+}
+
+export interface ChangePasswordRequest {
+  currentPassword: string;
+  newPassword: string;
+}
+
 export interface Ticket {
   id: string;
   ticketNumber: string;
@@ -140,10 +151,22 @@ export interface TicketHistory {
   createdAt: string;
 }
 
+export interface TicketAttachment {
+  id: string;
+  originalName: string;
+  contentType: string;
+  size: number;
+  uploadedById: string;
+  uploadedByFirstName: string;
+  uploadedByLastName: string;
+  createdAt: string;
+}
+
 export interface TicketDetail {
   ticket: Ticket;
   comments: TicketComment[];
   history: TicketHistory[];
+  attachments: TicketAttachment[];
 }
 
 export interface Category {

@@ -1,9 +1,10 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { categoryApi, ticketApi, userApi } from "../api";
+import { attachmentApi, categoryApi, ticketApi, userApi } from "../api";
 import { errorMessage } from "../api/client";
 import type {
   Category,
+  TicketAttachment,
   TicketDetail,
   TicketPriority,
   TicketStatus,
@@ -26,7 +27,7 @@ import {
   StatusBadge,
   Textarea,
 } from "../components/ui";
-import { formatDateTime, fullName } from "../lib/format";
+import { formatBytes, formatDateTime, fullName } from "../lib/format";
 
 const TRANSITIONS: Record<TicketStatus, TicketStatus[]> = {
   OPEN: ["ASSIGNED"],
@@ -61,6 +62,10 @@ export function TicketDetail() {
   const [editDescription, setEditDescription] = useState("");
   const [editPriority, setEditPriority] = useState<TicketPriority>("MEDIUM");
   const [editCategoryId, setEditCategoryId] = useState("");
+
+  const [file, setFile] = useState<File | null>(null);
+  const [uploading, setUploading] = useState(false);
+  const [uploadError, setUploadError] = useState("");
 
   const load = () => {
     if (!id) return;
@@ -173,6 +178,51 @@ export function TicketDetail() {
     }
   };
 
+  const submitAttachment = async (e: FormEvent) => {
+    e.preventDefault();
+    if (!file) return;
+    setUploading(true);
+    setUploadError("");
+    setActionError("");
+    try {
+      await attachmentApi.upload(ticket.id, file);
+      setFile(null);
+      reload();
+    } catch (err) {
+      setUploadError(errorMessage(err));
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const downloadAttachment = async (a: TicketAttachment) => {
+    setActionError("");
+    try {
+      const blob = await attachmentApi.download(a.id);
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = a.originalName;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      setActionError(errorMessage(err));
+    }
+  };
+
+  const deleteAttachment = async (a: TicketAttachment) => {
+    if (!window.confirm(`Delete attachment "${a.originalName}"?`)) return;
+    setActionError("");
+    try {
+      await attachmentApi.remove(a.id);
+      reload();
+    } catch (err) {
+      setActionError(errorMessage(err));
+    }
+  };
+
   return (
     <div>
       <PageHeader
@@ -257,6 +307,54 @@ export function TicketDetail() {
               <div className="form-actions" style={{ marginTop: 4 }}>
                 <Button type="submit" disabled={!comment.trim()}>
                   Add comment
+                </Button>
+              </div>
+            </form>
+          </Card>
+
+          <Card style={{ padding: 20 }}>
+            <h3 style={{ marginBottom: 14 }}>Attachments</h3>
+
+            {uploadError && <div className="form-error">{uploadError}</div>}
+
+            {detail.attachments.length === 0 && <EmptyState title="No attachments" />}
+
+            {detail.attachments.map((a) => (
+              <div className="attachment-row" key={a.id}>
+                <div className="attachment-info">
+                  <div className="attachment-name" title={a.originalName}>
+                    {a.originalName}
+                  </div>
+                  <div className="attachment-meta">
+                    {formatBytes(a.size)} ·{" "}
+                    {fullName(a.uploadedByFirstName, a.uploadedByLastName)} · {formatDateTime(a.createdAt)}
+                  </div>
+                </div>
+                <div className="attachment-actions">
+                  <Button variant="ghost" size="sm" onClick={() => downloadAttachment(a)}>
+                    Download
+                  </Button>
+                  {(isAgent || user?.id === a.uploadedById) && (
+                    <Button variant="danger" size="sm" onClick={() => deleteAttachment(a)}>
+                      Delete
+                    </Button>
+                  )}
+                </div>
+              </div>
+            ))}
+
+            <form onSubmit={submitAttachment} style={{ marginTop: 16 }} className="stack">
+              <Field label="Add a file (max 10 MB)">
+                <input
+                  className="input"
+                  type="file"
+                  onChange={(e) => setFile(e.target.files?.[0] ?? null)}
+                  disabled={uploading}
+                />
+              </Field>
+              <div className="form-actions" style={{ marginTop: 4 }}>
+                <Button type="submit" disabled={!file || uploading}>
+                  {uploading ? "Uploading…" : "Upload"}
                 </Button>
               </div>
             </form>

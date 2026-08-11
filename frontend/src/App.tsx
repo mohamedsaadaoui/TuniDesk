@@ -6,6 +6,8 @@ import { Categories } from "./pages/Categories";
 import { Dashboard } from "./pages/Dashboard";
 import { Login } from "./pages/Login";
 import { NotFound } from "./pages/NotFound";
+import { Notifications } from "./pages/Notifications";
+import { Profile } from "./pages/Profile";
 import { Register } from "./pages/Register";
 import { SlaPolicies } from "./pages/SlaPolicies";
 import { TicketDetail } from "./pages/TicketDetail";
@@ -35,6 +37,8 @@ export default function App() {
         <Route path="/tickets" element={<TicketList />} />
         <Route path="/tickets/new" element={<TicketNew />} />
         <Route path="/tickets/:id" element={<TicketDetail />} />
+        <Route path="/notifications" element={<Notifications />} />
+        <Route path="/profile" element={<Profile />} />
         <Route element={<AdminOnly />}>
           <Route path="/categories" element={<Categories />} />
           <Route path="/sla" element={<SlaPolicies />} />

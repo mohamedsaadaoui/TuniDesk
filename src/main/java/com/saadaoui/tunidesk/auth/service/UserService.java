@@ -1,6 +1,8 @@
 package com.saadaoui.tunidesk.auth.service;
 
 import com.saadaoui.tunidesk.user.dto.CreateUserRequest;
+import com.saadaoui.tunidesk.user.dto.ChangePasswordRequest;
+import com.saadaoui.tunidesk.user.dto.ProfileUpdateRequest;
 import com.saadaoui.tunidesk.user.dto.UpdateUserRequest;
 import com.saadaoui.tunidesk.user.dto.UserOptionResponse;
 import com.saadaoui.tunidesk.user.dto.UserResponse;
@@ -19,6 +21,10 @@ public interface UserService {
     UserResponse getUserById(UUID id);
 
     UserResponse getCurrentUser(String email);
+
+    UserResponse updateProfile(String email, ProfileUpdateRequest request);
+
+    void changePassword(String email, ChangePasswordRequest request);
 
     Page<UserResponse> getAllUsers(String search, Boolean enabled, Pageable pageable);
 

@@ -1,7 +1,9 @@
 package com.saadaoui.tunidesk.user.controller;
 
 import com.saadaoui.tunidesk.auth.service.UserService;
+import com.saadaoui.tunidesk.user.dto.ChangePasswordRequest;
 import com.saadaoui.tunidesk.user.dto.CreateUserRequest;
+import com.saadaoui.tunidesk.user.dto.ProfileUpdateRequest;
 import com.saadaoui.tunidesk.user.dto.UpdateUserRequest;
 import com.saadaoui.tunidesk.user.dto.UserOptionResponse;
 import com.saadaoui.tunidesk.user.dto.UserResponse;
@@ -26,6 +28,23 @@ import java.util.UUID;
 public class UserController {
 
     private final UserService userService;
+
+    @PutMapping("/me")
+    public UserResponse updateProfile(
+            @Valid @RequestBody ProfileUpdateRequest request,
+            @AuthenticationPrincipal UserDetails currentUser) {
+
+        return userService.updateProfile(currentUser.getUsername(), request);
+    }
+
+    @PutMapping("/me/password")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void changePassword(
+            @Valid @RequestBody ChangePasswordRequest request,
+            @AuthenticationPrincipal UserDetails currentUser) {
+
+        userService.changePassword(currentUser.getUsername(), request);
+    }
 
     @PostMapping
     public ResponseEntity<UserResponse> create(

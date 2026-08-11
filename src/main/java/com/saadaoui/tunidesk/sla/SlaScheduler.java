@@ -1,6 +1,7 @@
 package com.saadaoui.tunidesk.sla;
 
 import com.saadaoui.tunidesk.auth.entity.User;
+import com.saadaoui.tunidesk.email.service.EmailService;
 import com.saadaoui.tunidesk.entity.Ticket;
 import com.saadaoui.tunidesk.entity.TicketStatus;
 import com.saadaoui.tunidesk.notification.NotificationTypes;
@@ -30,6 +31,8 @@ public class SlaScheduler {
     private final TicketRepository ticketRepository;
 
     private final NotificationService notificationService;
+
+    private final EmailService emailService;
 
     @Value("${application.sla.check-cron}")
     private String checkCron;
@@ -95,6 +98,8 @@ public class SlaScheduler {
         recipients.add(ticket.getCreatedBy());
 
         notificationService.notifyUsers(recipients, type, title, message);
+
+        emailService.sendTicketAlert(title, message, recipients);
     }
 
 }

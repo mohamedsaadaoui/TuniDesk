@@ -5,17 +5,20 @@ import type {
   AssignRequest,
   Category,
   CategoryRequest,
+  ChangePasswordRequest,
   CommentRequest,
   CreateUserRequest,
   DashboardSummary,
   LoginRequest,
   Notification,
   Page,
+  ProfileUpdateRequest,
   RegisterRequest,
   SlaPolicy,
   SlaPolicyRequest,
   StatusChangeRequest,
   Ticket,
+  TicketAttachment,
   TicketDetail,
   TicketPriority,
   TicketRequest,
@@ -92,6 +95,22 @@ export const userApi = {
   update: (id: string, data: UpdateUserRequest) =>
     api.put<User>(`/users/${id}`, data).then((r) => r.data),
   remove: (id: string) => api.delete(`/users/${id}`),
+  profile: (data: ProfileUpdateRequest) => api.put<User>("/users/me", data).then((r) => r.data),
+  changePassword: (data: ChangePasswordRequest) =>
+    api.put<void>("/users/me/password", data).then((r) => r.data),
+};
+
+export const attachmentApi = {
+  upload: (ticketId: string, file: File) => {
+    const formData = new FormData();
+    formData.append("file", file);
+    return api
+      .post<TicketAttachment>(`/tickets/${ticketId}/attachments`, formData)
+      .then((r) => r.data);
+  },
+  download: (id: string) =>
+    api.get<Blob>(`/attachments/${id}/download`, { responseType: "blob" }).then((r) => r.data),
+  remove: (id: string) => api.delete(`/attachments/${id}`),
 };
 
 export const notificationApi = {

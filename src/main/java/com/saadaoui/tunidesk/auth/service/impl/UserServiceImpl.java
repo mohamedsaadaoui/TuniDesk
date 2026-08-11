@@ -11,6 +11,8 @@ import com.saadaoui.tunidesk.exception.AccessDeniedException;
 import com.saadaoui.tunidesk.exception.DuplicateResourceException;
 import com.saadaoui.tunidesk.exception.ResourceNotFoundException;
 import com.saadaoui.tunidesk.user.dto.CreateUserRequest;
+import com.saadaoui.tunidesk.user.dto.ChangePasswordRequest;
+import com.saadaoui.tunidesk.user.dto.ProfileUpdateRequest;
 import com.saadaoui.tunidesk.user.dto.UpdateUserRequest;
 import com.saadaoui.tunidesk.user.dto.UserOptionResponse;
 import com.saadaoui.tunidesk.user.dto.UserResponse;
@@ -127,6 +129,44 @@ public class UserServiceImpl implements UserService {
         return userRepository.findByEmail(email)
                 .map(userMapper::toResponse)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+    }
+
+    @Override
+    @Transactional
+    public UserResponse updateProfile(String email, ProfileUpdateRequest request) {
+
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+
+        user.setFirstName(request.getFirstName().trim());
+        user.setLastName(request.getLastName().trim());
+        user.setPhoneNumber(request.getPhoneNumber());
+
+        User saved = userRepository.save(user);
+
+        auditLogService.record(AuditConstants.ACTION_UPDATE, AuditConstants.ENTITY_USER,
+                saved.getId(), "Updated own profile \"" + saved.getEmail() + "\"");
+
+        return userMapper.toResponse(saved);
+    }
+
+    @Override
+    @Transactional
+    public void changePassword(String email, ChangePasswordRequest request) {
+
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+
+        if (!passwordEncoder.matches(request.getCurrentPassword(), user.getPassword())) {
+            throw new IllegalArgumentException("Current password is incorrect");
+        }
+
+        user.setPassword(passwordEncoder.encode(request.getNewPassword()));
+
+        userRepository.save(user);
+
+        auditLogService.record(AuditConstants.ACTION_UPDATE, AuditConstants.ENTITY_USER,
+                user.getId(), "Changed password for \"" + user.getEmail() + "\"");
     }
 
     @Override
