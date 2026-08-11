@@ -2,7 +2,7 @@
 
 TuniDesk is a full-stack helpdesk platform: a Spring Boot REST API plus a React frontend for managing IT helpdesk tickets — ticket lifecycle, assignment, SLA tracking with breach monitoring, real-time notifications, audit logs, and dashboards.
 
-## Tech Stack
+## Tech Stack 
 
 ### Backend
 - Java 21, Spring Boot 3.5
