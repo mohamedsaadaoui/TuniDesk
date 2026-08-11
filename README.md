@@ -1,15 +1,22 @@
 # TuniDesk — HelpDesk / IT Service Management Platform
 
-TuniDesk is a Spring Boot REST API for managing IT helpdesk tickets: ticket lifecycle, assignment, SLA tracking with breach monitoring, notifications, audit logs, and dashboards.
+TuniDesk is a full-stack helpdesk platform: a Spring Boot REST API plus a React frontend for managing IT helpdesk tickets — ticket lifecycle, assignment, SLA tracking with breach monitoring, real-time notifications, audit logs, and dashboards.
 
 ## Tech Stack
 
+### Backend
 - Java 21, Spring Boot 3.5
 - Spring Security + JWT authentication
 - Spring Data JPA, PostgreSQL
 - MapStruct, Lombok, Validation
 - WebSocket / STOMP for real-time notifications
 - SpringDoc OpenAPI (Swagger UI)
+
+### Frontend
+- React 19, Vite, TypeScript
+- React Router, Axios
+- STOMP (via `@stomp/stompjs`) + SockJS for live notifications
+- Custom CSS design system (no UI library)
 
 ## Features
 
@@ -49,13 +56,22 @@ spring.datasource.password=postgres
 
 ### 3. Run
 
+Backend:
+
 ```bash
 ./mvnw spring-boot:run
 ```
 
-The app starts on `http://localhost:8080`.
+Frontend (new terminal):
 
-Swagger UI: http://localhost:8080/swagger-ui.html
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+The backend starts on `http://localhost:8080` (Swagger UI: http://localhost:8080/swagger-ui.html).
+The frontend starts on `http://localhost:5173` and proxies `/api` and `/ws` to the backend.
 
 On first startup, `DataInitializer` seeds roles, demo users, categories and SLA policies.
 

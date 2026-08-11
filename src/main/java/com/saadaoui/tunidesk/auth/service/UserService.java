@@ -18,6 +18,8 @@ public interface UserService {
 
     UserResponse getUserById(UUID id);
 
+    UserResponse getCurrentUser(String email);
+
     Page<UserResponse> getAllUsers(String search, Boolean enabled, Pageable pageable);
 
     List<UserOptionResponse> getRecipientOptions(String search);

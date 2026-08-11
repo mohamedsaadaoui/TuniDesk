@@ -122,6 +122,15 @@ public class UserServiceImpl implements UserService {
 
     @Override
     @Transactional(readOnly = true)
+    public UserResponse getCurrentUser(String email) {
+
+        return userRepository.findByEmail(email)
+                .map(userMapper::toResponse)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+    }
+
+    @Override
+    @Transactional(readOnly = true)
     public Page<UserResponse> getAllUsers(String search, Boolean enabled, Pageable pageable) {
 
         return userRepository

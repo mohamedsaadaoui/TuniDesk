@@ -38,3 +38,9 @@ skills-lock.json
 frontend/vite.log
 frontend/node_modules/
 frontend/dist/
+
+### Runtime logs ###
+*.log
+
+### Build artifacts ###
+*.tsbuildinfo
