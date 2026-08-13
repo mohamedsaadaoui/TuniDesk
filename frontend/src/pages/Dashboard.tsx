@@ -1,5 +1,18 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
+import {
+  Bar,
+  BarChart,
+  CartesianGrid,
+  Cell,
+  Legend,
+  Pie,
+  PieChart,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from "recharts";
 import { dashboardApi } from "../api";
 import { errorMessage } from "../api/client";
 import type { DashboardSummary } from "../api/types";
@@ -12,7 +25,26 @@ import {
 } from "../components/ui";
 import { formatDateTime } from "../lib/format";
 
-const BAR_COLORS = ["#2563eb", "#7c3aed", "#0ea5e9", "#16a34a", "#f59e0b", "#ef4444", "#64748b"];
+const STATUS_COLORS: Record<string, string> = {
+  OPEN: "#2563eb",
+  IN_PROGRESS: "#7c3aed",
+  RESOLVED: "#16a34a",
+  CLOSED: "#64748b",
+};
+
+const PRIORITY_COLORS: Record<string, string> = {
+  LOW: "#22c55e",
+  MEDIUM: "#f59e0b",
+  HIGH: "#ef4444",
+  URGENT: "#7f1d1d",
+};
+
+const DEFAULT_COLOR = "#94a3b8";
+
+function formatLabel(value: string): string {
+  const spaced = value.replace("_", " ").toLowerCase();
+  return spaced.charAt(0).toUpperCase() + spaced.slice(1);
+}
 
 export function Dashboard() {
   const [summary, setSummary] = useState<DashboardSummary | null>(null);
@@ -28,9 +60,21 @@ export function Dashboard() {
   if (error) return <div className="form-error">{error}</div>;
   if (!summary) return <Spinner label="Loading dashboard…" />;
 
-  const maxStatus = Math.max(1, ...summary.ticketsByStatus.map((s) => s.count));
-  const maxPriority = Math.max(1, ...summary.ticketsByPriority.map((p) => p.count));
-  const maxCategory = Math.max(1, ...summary.ticketsByCategory.map((c) => c.count));
+  const statusData = summary.ticketsByStatus.map((s) => ({
+    name: formatLabel(s.status),
+    count: s.count,
+  }));
+  const priorityData = summary.ticketsByPriority.map((p) => ({
+    name: formatLabel(p.priority),
+    count: p.count,
+  }));
+  const categoryData = summary.ticketsByCategory.map((c) => ({
+    name: c.name,
+    count: c.count,
+  }));
+  const hasStatusData = statusData.some((d) => d.count > 0);
+  const hasPriorityData = priorityData.some((d) => d.count > 0);
+  const hasCategoryData = categoryData.some((d) => d.count > 0);
 
   return (
     <div>
@@ -79,60 +123,68 @@ export function Dashboard() {
       <div className="dashboard-grid">
         <Card className="chart-card">
           <h3>By status</h3>
-          {summary.ticketsByStatus.map((s) => (
-            <div className="bar-row" key={s.status}>
-              <span className="bar-label">{s.status.replace("_", " ")}</span>
-              <div className="bar-track">
-                <div
-                  className="bar-fill"
-                  style={{
-                    width: `${(s.count / maxStatus) * 100}%`,
-                    background: BAR_COLORS[0],
-                  }}
-                />
-              </div>
-              <span className="bar-count">{s.count}</span>
-            </div>
-          ))}
+          {!hasStatusData && <EmptyState title="No data yet" />}
+          {hasStatusData && (
+            <ResponsiveContainer width="100%" height={260}>
+              <PieChart>
+                <Pie
+                  data={statusData}
+                  dataKey="count"
+                  nameKey="name"
+                  innerRadius={55}
+                  outerRadius={85}
+                  paddingAngle={2}
+                  stroke="none"
+                >
+                  {statusData.map((d) => (
+                    <Cell key={d.name} fill={STATUS_COLORS[d.name.toUpperCase().replace(" ", "_")] ?? DEFAULT_COLOR} />
+                  ))}
+                </Pie>
+                <Tooltip />
+                <Legend />
+              </PieChart>
+            </ResponsiveContainer>
+          )}
         </Card>
 
         <Card className="chart-card">
           <h3>By priority</h3>
-          {summary.ticketsByPriority.map((p) => (
-            <div className="bar-row" key={p.priority}>
-              <span className="bar-label">{p.priority}</span>
-              <div className="bar-track">
-                <div
-                  className="bar-fill"
-                  style={{
-                    width: `${(p.count / maxPriority) * 100}%`,
-                    background: BAR_COLORS[2],
-                  }}
-                />
-              </div>
-              <span className="bar-count">{p.count}</span>
-            </div>
-          ))}
+          {!hasPriorityData && <EmptyState title="No data yet" />}
+          {hasPriorityData && (
+            <ResponsiveContainer width="100%" height={260}>
+              <BarChart data={priorityData} margin={{ top: 5, right: 5, left: -24, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                <XAxis dataKey="name" tickLine={false} axisLine={false} />
+                <YAxis allowDecimals={false} tickLine={false} axisLine={false} />
+                <Tooltip cursor={{ fill: "rgba(148, 163, 184, 0.15)" }} />
+                <Bar dataKey="count" radius={[6, 6, 0, 0]}>
+                  {priorityData.map((d) => (
+                    <Cell key={d.name} fill={PRIORITY_COLORS[d.name.toUpperCase()] ?? DEFAULT_COLOR} />
+                  ))}
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
+          )}
         </Card>
 
         <Card className="chart-card">
           <h3>By category</h3>
-          {summary.ticketsByCategory.length === 0 && <EmptyState title="No data yet" />}
-          {summary.ticketsByCategory.map((c, i) => (
-            <div className="bar-row" key={c.name}>
-              <span className="bar-label">{c.name}</span>
-              <div className="bar-track">
-                <div
-                  className="bar-fill"
-                  style={{
-                    width: `${(c.count / maxCategory) * 100}%`,
-                    background: BAR_COLORS[i % BAR_COLORS.length],
-                  }}
-                />
-              </div>
-              <span className="bar-count">{c.count}</span>
-            </div>
-          ))}
+          {!hasCategoryData && <EmptyState title="No data yet" />}
+          {hasCategoryData && (
+            <ResponsiveContainer width="100%" height={260}>
+              <BarChart
+                data={categoryData}
+                layout="vertical"
+                margin={{ top: 5, right: 16, left: 0, bottom: 0 }}
+              >
+                <CartesianGrid strokeDasharray="3 3" horizontal={false} />
+                <XAxis type="number" allowDecimals={false} tickLine={false} axisLine={false} />
+                <YAxis type="category" dataKey="name" width={110} tickLine={false} axisLine={false} />
+                <Tooltip cursor={{ fill: "rgba(148, 163, 184, 0.15)" }} />
+                <Bar dataKey="count" radius={[0, 6, 6, 0]} fill="#2563eb" />
+              </BarChart>
+            </ResponsiveContainer>
+          )}
         </Card>
 
         <Card className="chart-card">

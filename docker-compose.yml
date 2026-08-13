@@ -2,17 +2,52 @@ services:
   postgres:
     image: postgres:17
     container_name: tunidesk-db
-
     environment:
       POSTGRES_DB: tunidesk
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
-
     ports:
       - "5432:5432"
-
     volumes:
       - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d tunidesk"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: tunidesk-backend
+    environment:
+      SPRING_PROFILES_ACTIVE: prod
+      DB_URL: jdbc:postgresql://postgres:5432/tunidesk
+      DB_USERNAME: postgres
+      DB_PASSWORD: postgres
+      # Must be a valid Base64 string of at least 256 bits (JJWT decodes it)
+      JWT_SECRET: ${JWT_SECRET:-9fQ2mL8xV7tR4kN6pL1sD3gH5jK7mN2pL8vX4zQ9wE6rT1yU3iO7pA5sD9fG8hJ2kM4nB6vC}
+      UPLOAD_DIR: /data/uploads
+      APP_BASE_URL: http://localhost:5173
+    ports:
+      - "${BACKEND_PORT:-8080}:8080"
+    volumes:
+      - uploads-data:/data/uploads
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: tunidesk-frontend
+    ports:
+      - "${FRONTEND_PORT:-5173}:80"
+    depends_on:
+      - backend
 
 volumes:
   postgres-data:
+  uploads-data:

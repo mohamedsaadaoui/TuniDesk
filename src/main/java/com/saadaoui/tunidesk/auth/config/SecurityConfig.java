@@ -74,6 +74,7 @@ public class SecurityConfig {
                                 "/swagger-ui/**",
                                 "/swagger-ui.html",
                                 "/ws/**",
+                                "/actuator/health",
                                 "/error"
                         ).permitAll()
                         .requestMatchers(
