@@ -1,13 +1,16 @@
 package com.saadaoui.tunidesk.auth.controller;
 
 import com.saadaoui.tunidesk.auth.dto.AuthResponse;
+import com.saadaoui.tunidesk.auth.dto.ForgotPasswordRequest;
 import com.saadaoui.tunidesk.auth.dto.LoginRequest;
 import com.saadaoui.tunidesk.auth.dto.RegisterRequest;
+import com.saadaoui.tunidesk.auth.dto.ResetPasswordRequest;
 import com.saadaoui.tunidesk.auth.service.AuthenticationService;
 import com.saadaoui.tunidesk.auth.service.UserService;
 import com.saadaoui.tunidesk.user.dto.UserResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
@@ -39,5 +42,19 @@ public class AuthController {
     public UserResponse me(@AuthenticationPrincipal UserDetails currentUser) {
 
         return userService.getCurrentUser(currentUser.getUsername());
+    }
+
+    @PostMapping("/forgot-password")
+    @ResponseStatus(HttpStatus.OK)
+    public void forgotPassword(@Valid @RequestBody ForgotPasswordRequest request) {
+
+        authenticationService.forgotPassword(request);
+    }
+
+    @PostMapping("/reset-password")
+    @ResponseStatus(HttpStatus.OK)
+    public void resetPassword(@Valid @RequestBody ResetPasswordRequest request) {
+
+        authenticationService.resetPassword(request);
     }
 }

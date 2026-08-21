@@ -7,6 +7,8 @@ public final class AuditConstants {
     public static final String ACTION_DELETE = "DELETE";
     public static final String ACTION_LOGIN = "LOGIN";
     public static final String ACTION_REGISTER = "REGISTER";
+    public static final String ACTION_PASSWORD_RESET_REQUESTED = "PASSWORD_RESET_REQUESTED";
+    public static final String ACTION_PASSWORD_RESET = "PASSWORD_RESET";
 
     public static final String ENTITY_USER = "USER";
     public static final String ENTITY_TICKET = "TICKET";

@@ -1,9 +1,11 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { categoryApi, ticketApi } from "../api";
+import { categoryApi, ticketApi, userApi } from "../api";
 import { errorMessage } from "../api/client";
-import type { Category, Page, Ticket, TicketPriority, TicketStatus } from "../api/types";
+import type { Category, Page, Ticket, TicketPriority, TicketStatus, UserOption } from "../api/types";
+import { useAuth } from "../auth/AuthContext";
 import {
+  Button,
   Card,
   EmptyState,
   Input,
@@ -21,41 +23,67 @@ const STATUSES: Array<TicketStatus | ""> = ["", "OPEN", "ASSIGNED", "IN_PROGRESS
 const PRIORITIES: Array<TicketPriority | ""> = ["", "LOW", "MEDIUM", "HIGH", "CRITICAL"];
 
 export function TicketList() {
+  const { user, isAgent } = useAuth();
   const [page, setPage] = useState(0);
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState<TicketStatus | "">("");
   const [priority, setPriority] = useState<TicketPriority | "">("");
   const [categoryId, setCategoryId] = useState("");
+  const [assignedToId, setAssignedToId] = useState("");
   const [slaBreached, setSlaBreached] = useState<"" | "true" | "false">("");
   const [data, setData] = useState<Page<Ticket> | null>(null);
   const [categories, setCategories] = useState<Category[]>([]);
+  const [agents, setAgents] = useState<UserOption[]>([]);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
+  const [exporting, setExporting] = useState(false);
 
   useEffect(() => {
     categoryApi.list(true).then(setCategories).catch(() => {});
-  }, []);
+    if (isAgent) {
+      userApi.agents().then(setAgents).catch(() => {});
+    }
+  }, [isAgent]);
+
+  const buildQuery = () => ({
+    search: search || undefined,
+    status: status || undefined,
+    priority: priority || undefined,
+    categoryId: categoryId || undefined,
+    assignedToId: assignedToId || undefined,
+    slaBreached: slaBreached === "" ? undefined : slaBreached === "true",
+  });
 
   useEffect(() => {
     setLoading(true);
     ticketApi
-      .list({
-        search: search || undefined,
-        status: status || undefined,
-        priority: priority || undefined,
-        categoryId: categoryId || undefined,
-        slaBreached: slaBreached === "" ? undefined : slaBreached === "true",
-        page,
-        size: 10,
-        sortBy: "createdAt",
-        direction: "desc",
-      })
+      .list({ ...buildQuery(), page, size: 10, sortBy: "createdAt", direction: "desc" })
       .then(setData)
       .catch((err) => setError(errorMessage(err)))
       .finally(() => setLoading(false));
-  }, [page, search, status, priority, categoryId, slaBreached]);
+  }, [page, search, status, priority, categoryId, assignedToId, slaBreached]);
 
   const resetPage = () => setPage(0);
+
+  const exportCsv = async () => {
+    setError("");
+    setExporting(true);
+    try {
+      const blob = await ticketApi.exportCsv(buildQuery());
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `tickets-${new Date().toISOString().slice(0, 19).replace("T", "-").replaceAll(":", "")}.csv`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      setError(errorMessage(err));
+    } finally {
+      setExporting(false);
+    }
+  };
 
   return (
     <div>
@@ -63,9 +91,14 @@ export function TicketList() {
         title="Tickets"
         subtitle="Search and manage support tickets"
         actions={
-          <Link className="btn btn-primary btn-md" to="/tickets/new">
-            + New ticket
-          </Link>
+          <>
+            <Button variant="secondary" onClick={exportCsv} disabled={exporting}>
+              {exporting ? "Exporting…" : "Export CSV"}
+            </Button>
+            <Link className="btn btn-primary btn-md" to="/tickets/new">
+              + New ticket
+            </Link>
+          </>
         }
       />
 
@@ -121,6 +154,25 @@ export function TicketList() {
             </option>
           ))}
         </Select>
+        {isAgent && (
+          <Select
+            value={assignedToId}
+            onChange={(e) => {
+              setAssignedToId(e.target.value);
+              resetPage();
+            }}
+          >
+            <option value="">Any assignee</option>
+            <option value={user?.id ?? ""}>Assigned to me</option>
+            {agents
+              .filter((a) => a.id !== user?.id)
+              .map((a) => (
+                <option key={a.id} value={a.id}>
+                  {fullName(a.firstName, a.lastName)}
+                </option>
+              ))}
+          </Select>
+        )}
         <Select
           value={slaBreached}
           onChange={(e) => {

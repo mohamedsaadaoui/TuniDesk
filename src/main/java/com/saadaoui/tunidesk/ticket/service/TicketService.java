@@ -6,6 +6,7 @@ import com.saadaoui.tunidesk.ticket.dto.*;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
+import java.util.List;
 import java.util.UUID;
 
 public interface TicketService {
@@ -19,6 +20,10 @@ public interface TicketService {
     Page<TicketResponse> getAll(String search, TicketStatus status, TicketPriority priority,
                                 UUID categoryId, UUID assignedToId, Boolean slaBreached,
                                 String actorEmail, Pageable pageable);
+
+    List<TicketResponse> getForExport(String search, TicketStatus status, TicketPriority priority,
+                                      UUID categoryId, UUID assignedToId, Boolean slaBreached,
+                                      String actorEmail);
 
     TicketResponse assign(UUID id, AssignRequest request, String actorEmail);
 

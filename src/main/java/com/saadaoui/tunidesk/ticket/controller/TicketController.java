@@ -2,6 +2,7 @@ package com.saadaoui.tunidesk.ticket.controller;
 
 import com.saadaoui.tunidesk.entity.TicketPriority;
 import com.saadaoui.tunidesk.entity.TicketStatus;
+import com.saadaoui.tunidesk.ticket.TicketCsvExporter;
 import com.saadaoui.tunidesk.ticket.dto.*;
 import com.saadaoui.tunidesk.ticket.service.TicketService;
 import jakarta.validation.Valid;
@@ -11,11 +12,14 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.UUID;
 
 @RestController
@@ -68,6 +72,28 @@ public class TicketController {
 
         return ticketService.getAll(search, status, priority, categoryId, assignedToId,
                 slaBreached, currentUser.getUsername(), createPageable(page, size, sortBy, direction));
+    }
+
+    @GetMapping("/export")
+    public ResponseEntity<byte[]> export(
+            @RequestParam(required = false) String search,
+            @RequestParam(required = false) TicketStatus status,
+            @RequestParam(required = false) TicketPriority priority,
+            @RequestParam(required = false) UUID categoryId,
+            @RequestParam(required = false) UUID assignedToId,
+            @RequestParam(required = false) Boolean slaBreached,
+            @AuthenticationPrincipal UserDetails currentUser) {
+
+        String csv = TicketCsvExporter.export(ticketService.getForExport(search, status, priority,
+                categoryId, assignedToId, slaBreached, currentUser.getUsername()));
+
+        String fileName = "tickets-" + LocalDateTime.now()
+                .format(DateTimeFormatter.ofPattern("yyyyMMdd-HHmmss")) + ".csv";
+
+        return ResponseEntity.ok()
+                .contentType(MediaType.parseMediaType("text/csv;charset=UTF-8"))
+                .header("Content-Disposition", "attachment; filename=\"" + fileName + "\"")
+                .body(csv.getBytes(java.nio.charset.StandardCharsets.UTF_8));
     }
 
     @PostMapping("/{id}/assign")

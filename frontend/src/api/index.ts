@@ -9,11 +9,13 @@ import type {
   CommentRequest,
   CreateUserRequest,
   DashboardSummary,
+  ForgotPasswordRequest,
   LoginRequest,
   Notification,
   Page,
   ProfileUpdateRequest,
   RegisterRequest,
+  ResetPasswordRequest,
   SlaPolicy,
   SlaPolicyRequest,
   StatusChangeRequest,
@@ -33,6 +35,10 @@ export const authApi = {
   register: (data: RegisterRequest) =>
     api.post<AuthResponse>("/auth/register", data).then((r) => r.data),
   me: () => api.get<User>("/auth/me").then((r) => r.data),
+  forgotPassword: (data: ForgotPasswordRequest) =>
+    api.post<void>("/auth/forgot-password", data).then((r) => r.data),
+  resetPassword: (data: ResetPasswordRequest) =>
+    api.post<void>("/auth/reset-password", data).then((r) => r.data),
 };
 
 export const dashboardApi = {
@@ -67,6 +73,10 @@ export const ticketApi = {
   addComment: (id: string, data: CommentRequest) =>
     api.post(`/tickets/${id}/comments`, data).then((r) => r.data),
   remove: (id: string) => api.delete(`/tickets/${id}`),
+  exportCsv: (params: TicketQuery) => {
+    const { page, size, sortBy, direction, ...filters } = params;
+    return api.get<Blob>("/tickets/export", { params: filters, responseType: "blob" }).then((r) => r.data);
+  },
 };
 
 export const categoryApi = {

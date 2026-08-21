@@ -67,6 +67,19 @@ public class EmailServiceImpl implements EmailService {
         }
     }
 
+    @Override
+    @Async
+    public void sendPasswordResetEmail(User user, String resetLink) {
+
+        String text = "Hello " + user.getFirstName() + ",\n\n"
+                + "We received a request to reset the password of your TuniDesk account.\n"
+                + "Click the link below to choose a new password. The link is valid for 60 minutes:\n\n"
+                + resetLink + "\n\n"
+                + "If you did not request this, you can safely ignore this email.";
+
+        sendTicketAlert("Reset your TuniDesk password", text, List.of(user));
+    }
+
     private String buildHtml(String text) {
 
         String escaped = text

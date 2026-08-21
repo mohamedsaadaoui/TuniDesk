@@ -28,6 +28,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -218,6 +219,23 @@ public class TicketServiceImpl implements TicketService {
 
         return ticketRepository.findAll(spec, pageable)
                 .map(ticketMapper::toResponse);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<TicketResponse> getForExport(String search, TicketStatus status, TicketPriority priority,
+                                             UUID categoryId, UUID assignedToId, Boolean slaBreached,
+                                             String actorEmail) {
+
+        User actor = findUser(actorEmail);
+
+        Specification<Ticket> spec = buildSpecification(search, status, priority,
+                categoryId, assignedToId, slaBreached, actor);
+
+        return ticketRepository.findAll(spec, Sort.by(Sort.Direction.DESC, "createdAt"))
+                .stream()
+                .map(ticketMapper::toResponse)
+                .toList();
     }
 
     @Override

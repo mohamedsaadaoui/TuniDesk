@@ -27,7 +27,9 @@ TuniDesk is a full-stack helpdesk platform: a Spring Boot REST API plus a React 
 ## Features
 
 - **Authentication & Authorization** — register, login, JWT tokens; roles `ADMIN`, `AGENT`, `USER`
+- **Password recovery** — forgot password emails a single-use, hashed token (valid 60 min) to reset the password
 - **Tickets** — create, update, detail, list with filters (search, status, priority, category, assignee, SLA) and pagination/sorting
+- **CSV export** — download the filtered ticket list as CSV (respects the caller's visibility scope)
 - **Assignment** — assign a ticket to an agent, or take ownership
 - **Status workflow** — guarded transitions (open → in progress → resolved → closed)
 - **Comments & History** — ticket comments plus a full change history per ticket
@@ -95,8 +97,11 @@ On first startup, `DataInitializer` seeds roles, demo users, categories and SLA 
 |--------|-----------------------------------|----------------------------------------------|
 | POST   | `/api/auth/register`              | Register a new user                          |
 | POST   | `/api/auth/login`                 | Login, returns JWT                           |
+| POST   | `/api/auth/forgot-password`       | Send a password reset link by email          |
+| POST   | `/api/auth/reset-password`        | Reset the password with an email token       |
 | GET    | `/api/dashboard/summary`          | Dashboard statistics                         |
 | GET/POST/PUT/DELETE | `/api/tickets`       | Ticket CRUD, list with filters               |
+| GET    | `/api/tickets/export`             | Export filtered tickets as CSV               |
 | POST   | `/api/tickets/{id}/assign`        | Assign ticket to an agent                    |
 | POST   | `/api/tickets/{id}/take`          | Agent takes the ticket                       |
 | POST   | `/api/tickets/{id}/status`        | Change ticket status                         |
@@ -113,7 +118,7 @@ Connect to `/ws` (SockJS/STOMP). Notifications are delivered to `/user/{userId}/
 
 ## Testing
 
-The backend ships with 44 unit + integration tests (JUnit 5, Mockito, H2 for integration):
+The backend ships with 51 unit + integration tests (JUnit 5, Mockito, H2 for integration):
 
 - **Unit tests** — services (tickets, SLA, users) with mocked repositories
 - **Integration tests** — full API flows (auth, profiles, tickets) against an embedded H2 database

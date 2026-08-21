@@ -8,4 +8,6 @@ public interface EmailService {
 
     void sendTicketAlert(String subject, String text, List<User> recipients);
 
+    void sendPasswordResetEmail(User user, String resetLink);
+
 }

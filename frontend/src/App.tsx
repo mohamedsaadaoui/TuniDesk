@@ -4,11 +4,13 @@ import { Layout } from "./components/Layout";
 import { AuditLogs } from "./pages/AuditLogs";
 import { Categories } from "./pages/Categories";
 import { Dashboard } from "./pages/Dashboard";
+import { ForgotPassword } from "./pages/ForgotPassword";
 import { Login } from "./pages/Login";
 import { NotFound } from "./pages/NotFound";
 import { Notifications } from "./pages/Notifications";
 import { Profile } from "./pages/Profile";
 import { Register } from "./pages/Register";
+import { ResetPassword } from "./pages/ResetPassword";
 import { SlaPolicies } from "./pages/SlaPolicies";
 import { TicketDetail } from "./pages/TicketDetail";
 import { TicketList } from "./pages/TicketList";
@@ -32,6 +34,8 @@ export default function App() {
     <Routes>
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
+      <Route path="/forgot-password" element={<ForgotPassword />} />
+      <Route path="/reset-password" element={<ResetPassword />} />
       <Route element={<Protected />}>
         <Route index element={<Dashboard />} />
         <Route path="/tickets" element={<TicketList />} />
