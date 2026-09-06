@@ -26,10 +26,14 @@ services:
       DB_URL: jdbc:postgresql://postgres:5432/tunidesk
       DB_USERNAME: postgres
       DB_PASSWORD: postgres
-      # Must be a valid Base64 string of at least 256 bits (JJWT decodes it)
-      JWT_SECRET: ${JWT_SECRET:-9fQ2mL8xV7tR4kN6pL1sD3gH5jK7mN2pL8vX4zQ9wE6rT1yU3iO7pA5sD9fG8hJ2kM4nB6vC}
+      # REQUIRED (no default): must be a valid Base64 string of at least 256 bits.
+      # Do not ship a hardcoded secret - generate one and export it before starting.
+      #   PowerShell:  $env:JWT_SECRET = [Convert]::ToBase64String((1..64 | ForEach-Object { Get-Random -Minimum 0 -Maximum 256 }))
+      #   bash:        export JWT_SECRET=$(openssl rand -base64 48)
+      JWT_SECRET: ${JWT_SECRET:?JWT_SECRET must be set to a 256-bit Base64 secret}
       UPLOAD_DIR: /data/uploads
-      APP_BASE_URL: http://localhost:5173
+      APP_BASE_URL: ${APP_BASE_URL:?APP_BASE_URL must be set to the public frontend origin}
+      CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-${APP_BASE_URL}}
     ports:
       - "${BACKEND_PORT:-8080}:8080"
     volumes:

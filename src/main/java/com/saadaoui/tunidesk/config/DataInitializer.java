@@ -24,7 +24,7 @@ import java.util.Set;
 
 @Slf4j
 @Component
-@ConditionalOnProperty(name = "application.seed-enabled", havingValue = "true", matchIfMissing = true)
+@ConditionalOnProperty(name = "application.seed-enabled", havingValue = "true")
 @RequiredArgsConstructor
 public class DataInitializer implements CommandLineRunner {
 

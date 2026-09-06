@@ -52,6 +52,8 @@ TuniDesk is a full-stack helpdesk platform: a Spring Boot REST API plus a React 
 docker compose up -d
 ```
 
+This starts only PostgreSQL (backend/frontend require a valid `JWT_SECRET`/`APP_BASE_URL`, see below).
+
 ### 2. Configure
 
 The `dev` profile is active by default (`application-dev.properties`):
@@ -81,9 +83,9 @@ npm run dev
 The backend starts on `http://localhost:8080` (Swagger UI: http://localhost:8080/swagger-ui.html).
 The frontend starts on `http://localhost:5173` and proxies `/api` and `/ws` to the backend.
 
-On first startup, `DataInitializer` seeds roles, demo users, categories and SLA policies.
+On first startup, `DataInitializer` seeds roles, demo users, categories and SLA policies. **Seeding is enabled only in the `dev` profile** (or when `SEED_ENABLED=true`). It is **off by default in production** — never run the seed with its known default passwords in a deployed environment.
 
-### Default users
+### Default users (dev profile only)
 
 | Role  | Email               | Password   |
 |-------|---------------------|------------|
@@ -153,13 +155,17 @@ com.saadaoui.tunidesk
 Run the full stack (PostgreSQL + backend + frontend) in one command:
 
 ```bash
+# JWT_SECRET and APP_BASE_URL are REQUIRED (no hardcoded defaults)
+# Generate a 256-bit Base64 secret, e.g. openssl rand -base64 48
+JWT_SECRET=$(openssl rand -base64 48) \
+APP_BASE_URL=https://helpdesk.example.com \
 docker compose up -d --build
 ```
 
 - Backend: http://localhost:8080 (Swagger UI: http://localhost:8080/swagger-ui.html)
 - Frontend (nginx): http://localhost:5173
 
-The frontend nginx container proxies `/api` and `/ws` to the backend, and SPA routes fall back to `index.html`. Override the published ports with `BACKEND_PORT` / `FRONTEND_PORT`, and set a production `JWT_SECRET` (valid Base64, ≥256 bits) in your environment. For local development, `docker compose up -d` alone still works — it starts only PostgreSQL so you can run the backend and frontend with hot reload.
+The frontend nginx container proxies `/api` and `/ws` to the backend, and SPA routes fall back to `index.html`. Override the published ports with `BACKEND_PORT` / `FRONTEND_PORT`. `CORS_ALLOWED_ORIGINS` defaults to `APP_BASE_URL`; set it explicitly if the frontend is served from more than one origin. For local development, `docker compose up -d` alone still works — it starts only PostgreSQL so you can run the backend and frontend with hot reload.
 
 ## CI/CD
 
